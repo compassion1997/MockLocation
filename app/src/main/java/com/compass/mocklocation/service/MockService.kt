@@ -16,12 +16,12 @@ import com.amap.api.maps.model.LatLng
 import com.amap.api.services.core.LatLonPoint
 import com.compass.mocklocation.R
 import com.compass.mocklocation.search.RoutePlan
+import com.compass.mocklocation.utils.FloatWindow
 import com.compass.mocklocation.utils.LatLonPointWithDistance
 import com.compass.mocklocation.utils.LocationCoordinate
 import com.compass.mocklocation.utils.LocationUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,10 +32,10 @@ class MockService : Service() {
         private const val TAG = "MockService"
         private const val DURATION = 1000L
         private const val CHANNEL_ID = "mock_service_channel"
-        const val ACTION_START_MOCK_LOCATION = "com.ivimock.ACTION_START_MOCK_LOCATION"
-        const val ACTION_STOP_MOCK_LOCATION = "com.ivimock.ACTION_STOP_MOCK_LOCATION"
-        const val ACTION_START_MOCK_NAVIGATION = "com.ivimock.ACTION_START_MOCK_NAVIGATION"
-        const val ACTION_STOP_MOCK_NAVIGATION = "com.ivimock.ACTION_STOP_MOCK_NAVIGATION"
+        const val ACTION_START_MOCK_LOCATION = "com.compass.ACTION_START_MOCK_LOCATION"
+        const val ACTION_STOP_MOCK_LOCATION = "com.compass.ACTION_STOP_MOCK_LOCATION"
+        const val ACTION_START_MOCK_NAVIGATION = "com.compass.ACTION_START_MOCK_NAVIGATION"
+        const val ACTION_STOP_MOCK_NAVIGATION = "com.compass.ACTION_STOP_MOCK_NAVIGATION"
     }
 
     private lateinit var locationManager: LocationManager
@@ -43,6 +43,7 @@ class MockService : Service() {
     private var networkProvider = LocationManager.NETWORK_PROVIDER
     private var scope: CoroutineScope? = null
     private var mSpeed = 40f
+    private var mFloatWindow: FloatWindow? = null
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -67,6 +68,7 @@ class MockService : Service() {
         createNotificationChannel()
         Log.d(TAG, "Init location manager")
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mFloatWindow = FloatWindow()
         RoutePlan.initMap(this)
     }
 
@@ -77,6 +79,7 @@ class MockService : Service() {
             when (intent.action) {
                 ACTION_START_MOCK_LOCATION -> {
                     Log.d(TAG, "Start mock location")
+                    mFloatWindow?.show(this)
                     val lng = intent.getFloatExtra(LocationCoordinate.LONGITUDE, 0.0f).toDouble()
                     val lat = intent.getFloatExtra(LocationCoordinate.LATITUDE, 0.0f).toDouble()
                     if (!LocationCoordinate.checkIllegalPosition(lat, lng)) {
@@ -94,6 +97,7 @@ class MockService : Service() {
 
                 ACTION_START_MOCK_NAVIGATION -> {
                     Log.d(TAG, "Start mock navigation")
+                    mFloatWindow?.show(this)
                     val startLat = intent.getFloatExtra(LocationCoordinate.START_LATITUDE, 0.0f).toDouble()
                     val startLng = intent.getFloatExtra(LocationCoordinate.START_LONGITUDE, 0.0f).toDouble()
                     val endLat = intent.getFloatExtra(LocationCoordinate.END_LATITUDE, 0.0f).toDouble()
@@ -219,6 +223,7 @@ class MockService : Service() {
     }
 
     private fun stopMockCommand() {
+        mFloatWindow?.remove()
         scope?.cancel()
         removeLocationTestProvider()
     }

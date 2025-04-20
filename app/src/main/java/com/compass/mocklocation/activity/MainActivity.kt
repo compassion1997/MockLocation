@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
                         putExtra(LocationCoordinate.LATITUDE, loc[1])
                     }
                     Log.d(TAG, "Ready to start service")
-                    startService(intent)
+                    startForegroundService(intent)
                     Log.d(TAG, "Service already started")
                 }
             }
